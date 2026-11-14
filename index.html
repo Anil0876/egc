@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EGC: Employee Group Chat</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* 1. SPLASH SCREEN */
+    #splash-screen {
+      position: fixed;
+      inset: 0;
+      background-color: #000000;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      transition: opacity 0.6s ease;
+    }
+
+    #splash-screen h1 {
+      font-size: 2.2rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      animation: popIn 0.8s ease-out forwards;
+      text-align: center;
+      padding: 0 20px;
+    }
+
+    #splash-screen p {
+      margin-top: 10px;
+      font-size: 1rem;
+      color: #aaaaaa;
+      letter-spacing: 3px;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.7); opacity: 0; }
+      70% { transform: scale(1.05); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* 2. ONBOARDING MODAL (FIRST-TIME VISITORS) */
+    #onboarding-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 900;
+      padding: 20px;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      padding: 28px;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    .modal-card h2 {
+      margin-bottom: 8px;
+      font-size: 1.4rem;
+      color: #111;
+    }
+
+    .modal-card p {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    .modal-card input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+      margin-bottom: 16px;
+      outline: none;
+    }
+
+    .gender-options {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .gender-btn {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      background: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .gender-btn.male.selected {
+      border-color: #1d4ed8;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .gender-btn.female.selected {
+      border-color: #db2777;
+      background: #fdf2f8;
+      color: #db2777;
+    }
+
+    #join-btn {
+      width: 100%;
+      padding: 12px;
+      background: #111;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    #join-btn:disabled {
+      background: #888;
+      cursor: not-allowed;
+    }
+
+    /* 3. MAIN CHAT INTERFACE (MOBILE + LAPTOP RESPONSIVE) */
+    .chat-container {
+      width: 100%;
+      max-width: 720px;
+      height: 100vh;
+      max-height: 100vh;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    @media (min-width: 768px) {
+      .chat-container {
+        height: 90vh;
+        border-radius: 16px;
+        overflow: hidden;
+      }
+    }
+
+    .chat-header {
+      background: #111111;
+      color: #ffffff;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chat-header .title-area h3 {
+      font-size: 1.1rem;
+      letter-spacing: 0.5px;
+    }
+
+    .chat-header .title-area span {
+      font-size: 0.75rem;
+      color: #bbbbbb;
+    }
+
+    .user-badge {
+      font-size: 0.85rem;
+      background: #222;
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+
+    /* Name Color Rules */
+    .male-name {
+      color: #2563eb; /* Blue */
+      font-weight: 700;
+    }
+
+    .female-name {
+      color: #ec4899; /* Pink */
+      font-weight: 700;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: #fafafa;
+    }
+
+    .sync-banner {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #888;
+      background: #eeeeee;
+      padding: 6px 12px;
+      border-radius: 12px;
+      align-self: center;
+      margin-bottom: 6px;
+    }
+
+    .message-bubble {
+      background: #ffffff;
+      border: 1px solid #eaeaea;
+      padding: 10px 14px;
+      border-radius: 12px;
+      max-width: 80%;
+      align-self: flex-start;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+
+    .message-bubble.own {
+      align-self: flex-end;
+      background: #f0f4ff;
+      border-color: #dbeafe;
+    }
+
+    .msg-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.8rem;
+      margin-bottom: 4px;
+    }
+
+    .msg-time {
+      color: #999;
+      font-size: 0.72rem;
+    }
+
+    .msg-text {
+      font-size: 0.95rem;
+      color: #222;
+      word-wrap: break-word;
+    }
+
+    .chat-input-area {
+      display: flex;
+      padding: 14px;
+      background: #ffffff;
+      border-top: 1px solid #eeeeee;
+      gap: 10px;
+    }
+
+    .chat-input-area input {
+      flex: 1;
+      padding: 12px 14px;
+      border: 1px solid #ddd;
+      border-radius: 24px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .chat-input-area button {
+      background: #111111;
+      color: #ffffff;
+      border: none;
+      padding: 0 22px;
+      border-radius: 24px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. SPLASH SCREEN -->
+  <div id="splash-screen">
+    <h1>Open, Confident, Together</h1>
+    <p>EGC: EMPLOYEE GROUP CHAT</p>
+  </div>
+
+  <!-- 2. FIRST-TIME USER ONBOARDING -->
+  <div id="onboarding-modal">
+    <div class="modal-card">
+      <h2>Welcome to EGC</h2>
+      <p>What will you be called here?</p>
+      <input type="text" id="username-input" placeholder="Enter your display name..." maxlength="20" />
+      
+      <div class="gender-options">
+        <button type="button" class="gender-btn male" onclick="selectGender('male')">Male</button>
+        <button type="button" class="gender-btn female" onclick="selectGender('female')">Female</button>
+      </div>
+
+      <button id="join-btn" onclick="registerUser()">Enter Group Chat</button>
+    </div>
+  </div>
+
+  <!-- 3. MAIN CHAT UI -->
+  <div class="chat-container">
+    <div class="chat-header">
+      <div class="title-area">
+        <h3>EGC: Employee Group Chat</h3>
+        <span>Open, Confident, Together</span>
+      </div>
+      <div class="user-badge">
+        You: <span id="current-user-display">Guest</span>
+      </div>
+    </div>
+
+    <div class="chat-messages" id="chat-messages">
+      <div class="sync-banner">Syncing chats from the last 2 days...</div>
+    </div>
+
+    <form class="chat-input-area" onsubmit="sendMessage(event)">
+      <input type="text" id="message-input" placeholder="Type an anonymous message..." required autocomplete="off" />
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <script>
+    // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL BELOW
+    const SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL";
+
+    let currentUser = JSON.parse(localStorage.getItem("egc_user")) || null;
+    let selectedGender = "";
+    let renderedCount = 0;
+
+    // Splash Screen & Initial Boot
+    window.addEventListener("DOMContentLoaded", () => {
+      setTimeout(() => {
+        const splash = document.getElementById("splash-screen");
+        splash.style.opacity = "0";
+        setTimeout(() => {
+          splash.style.display = "none";
+          initApp();
+        }, 600);
+      }, 2200);
+    });
+
+    function initApp() {
+      if (!currentUser) {
+        document.getElementById("onboarding-modal").style.display = "flex";
+      } else {
+        updateUserBadge();
+        syncLastTwoDaysChats(true);
+        setInterval(() => syncLastTwoDaysChats(false), 5000);
+      }
+    }
+
+    function selectGender(gender) {
+      selectedGender = gender;
+      document.querySelectorAll(".gender-btn").forEach(btn => btn.classList.remove("selected"));
+      document.querySelector(`.gender-btn.${gender}`).classList.add("selected");
+    }
+
+    async function registerUser() {
+      const nameInput = document.getElementById("username-input").value.trim();
+      const joinBtn = document.getElementById("join-btn");
+
+      if (!nameInput) {
+        alert("Please enter a name.");
+        return;
+      }
+      if (!selectedGender) {
+        alert("Please select Male or Female.");
+        return;
+      }
+
+      joinBtn.disabled = true;
+      joinBtn.innerText = "Checking availability...";
+
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "registerUser",
+            name: nameInput,
+            gender: selectedGender
+          })
+        });
+        const result = await response.json();
+
+        if (result.status === "success") {
+          currentUser = {
+            name: result.assignedName,
+            gender: result.gender
+          };
+          localStorage.setItem("egc_user", JSON.stringify(currentUser));
+          
+          document.getElementById("onboarding-modal").style.display = "none";
+          updateUserBadge();
+          syncLastTwoDaysChats(true);
+          setInterval(() => syncLastTwoDaysChats(false), 5000);
+        }
+      } catch (err) {
+        alert("Connection error. Verify your Google Apps Script URL.");
+      } finally {
+        joinBtn.disabled = false;
+        joinBtn.innerText = "Enter Group Chat";
+      }
+    }
+
+    function updateUserBadge() {
+      const badge = document.getElementById("current-user-display");
+      badge.innerText = currentUser.name;
+      badge.className = currentUser.gender === "male" ? "male-name" : "female-name";
+    }
+
+    // Fetch and sync all messages from the last 2 days (48 hours)
+    async function syncLastTwoDaysChats(isInitialLoad) {
+      const chatBox = document.getElementById("chat-messages");
+      try {
+        const response = await fetch(`${SCRIPT_URL}?action=getMessages`);
+        const result = await response.json();
+
+        if (result.status === "success") {
+          const messages = result.messages || [];
+
+          if (isInitialLoad || messages.length !== renderedCount) {
+            chatBox.innerHTML = `<div class="sync-banner">Showing chats from the last 2 days</div>`;
+            
+            if (messages.length === 0) {
+              chatBox.innerHTML += `<div class="sync-banner">No messages in the last 2 days. Start the conversation!</div>`;
+            } else {
+              messages.forEach(msg => {
+                appendMessageToUI(msg.name, msg.gender, msg.message, formatChatTime(msg.timestamp));
+              });
+            }
+            renderedCount = messages.length;
+          }
+        }
+      } catch (err) {
+        if (isInitialLoad) {
+          chatBox.innerHTML = `<div class="sync-banner">Unable to load history. Check Script URL.</div>`;
+        }
+      }
+    }
+
+    async function sendMessage(e) {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const input = document.getElementById("message-input");
+      const text = input.value.trim();
+      if (!text) return;
+
+      const nowISO = new Date().toISOString();
+      
+      // Optimistically show message immediately
+      appendMessageToUI(currentUser.name, currentUser.gender, text, formatChatTime(nowISO));
+      renderedCount++;
+      input.value = "";
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "sendMessage",
+            name: currentUser.name,
+            gender: currentUser.gender,
+            message: text
+          })
+        });
+      } catch (err) {
+        console.error("Failed to sync message to Google Sheet:", err);
+      }
+    }
+
+    function formatChatTime(isoString) {
+      const date = new Date(isoString);
+      if (isNaN(date.getTime())) return isoString;
+
+      const now = new Date();
+      const isToday = date.toDateString() === now.toDateString();
+      const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      if (isToday) {
+        return `Today, ${timeStr}`;
+      }
+      const dateStr = date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+      return `${dateStr}, ${timeStr}`;
+    }
+
+    function appendMessageToUI(name, gender, text, formattedTime) {
+      const chatBox = document.getElementById("chat-messages");
+      const isOwn = currentUser && name === currentUser.name;
+      const colorClass = gender === "male" ? "male-name" : "female-name";
+
+      const bubble = document.createElement("div");
+      bubble.className = `message-bubble ${isOwn ? "own" : ""}`;
+      bubble.innerHTML = `
+        <div class="msg-meta">
+          <span class="${colorClass}">${escapeHTML(name)}</span>
+          <span class="msg-time">${escapeHTML(formattedTime)}</span>
+        </div>
+        <div class="msg-text">${escapeHTML(text)}</div>
+      `;
+
+      chatBox.appendChild(bubble);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function escapeHTML(str) {
+      return String(str).replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+  </script>
+</body>
+</html>
