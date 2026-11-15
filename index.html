@@ -22,7 +22,7 @@
       overflow: hidden;
     }
 
-    /* 1. SPLASH SCREEN */
+    /* 1. SPLASH SCREEN WITH SEQUENTIAL TEXT ANIMATION */
     #splash-screen {
       position: fixed;
       inset: 0;
@@ -33,29 +33,32 @@
       justify-content: center;
       align-items: center;
       z-index: 1000;
+      padding: 20px;
+      text-align: center;
       transition: opacity 0.6s ease;
     }
 
-    #splash-screen h1 {
-      font-size: 2.2rem;
+    #splash-text {
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      min-height: 60px;
+      opacity: 0;
+      transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+      transform: scale(0.95);
+    }
+
+    #splash-text.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    #splash-sub {
+      margin-top: 15px;
+      font-size: 0.9rem;
+      color: #888;
       letter-spacing: 2px;
       text-transform: uppercase;
-      animation: popIn 0.8s ease-out forwards;
-      text-align: center;
-      padding: 0 20px;
-    }
-
-    #splash-screen p {
-      margin-top: 10px;
-      font-size: 1rem;
-      color: #aaaaaa;
-      letter-spacing: 3px;
-    }
-
-    @keyframes popIn {
-      0% { transform: scale(0.7); opacity: 0; }
-      70% { transform: scale(1.05); opacity: 1; }
-      100% { transform: scale(1); opacity: 1; }
     }
 
     /* 2. MODALS */
@@ -76,15 +79,16 @@
       border-radius: 14px;
       width: 100%;
       max-width: 380px;
-      max-height: 80vh;
+      max-height: 85vh;
       box-shadow: 0 10px 25px rgba(0,0,0,0.2);
       text-align: center;
       display: flex;
       flex-direction: column;
+      overflow-y: auto;
     }
 
     .modal-card h2 {
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       font-size: 1.4rem;
       color: #111;
     }
@@ -92,7 +96,7 @@
     .modal-card p, .modal-card ul {
       font-size: 0.9rem;
       color: #666;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       text-align: left;
     }
 
@@ -100,25 +104,53 @@
       padding-left: 20px;
     }
 
-    .modal-card input[type="text"] {
+    .auth-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      background: #f1f3f5;
+      padding: 4px;
+      border-radius: 8px;
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      background: transparent;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      border-radius: 6px;
+      color: #666;
+    }
+
+    .auth-tab.active {
+      background: #fff;
+      color: #111;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .modal-card input[type="text"],
+    .modal-card input[type="password"] {
       width: 100%;
       padding: 12px;
       border: 1px solid #ccc;
       border-radius: 8px;
       font-size: 1rem;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       outline: none;
     }
 
     .gender-options {
       display: flex;
       gap: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
 
     .gender-btn {
       flex: 1;
-      padding: 12px;
+      padding: 10px;
       border: 2px solid #e0e0e0;
       border-radius: 8px;
       background: #fff;
@@ -139,7 +171,7 @@
       color: #db2777;
     }
 
-    #join-btn {
+    .action-btn {
       width: 100%;
       padding: 12px;
       background: #111;
@@ -165,9 +197,20 @@
     .user-item {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       padding: 8px 10px;
       border-bottom: 1px solid #eaeaea;
       font-size: 0.9rem;
+    }
+
+    .private-chat-trigger {
+      background: #111;
+      color: #fff;
+      border: none;
+      padding: 4px 8px;
+      font-size: 0.7rem;
+      border-radius: 4px;
+      cursor: pointer;
     }
 
     .close-modal-btn {
@@ -248,11 +291,13 @@
     .male-name {
       color: #2563eb;
       font-weight: 700;
+      cursor: pointer;
     }
 
     .female-name {
       color: #ec4899;
       font-weight: 700;
+      cursor: pointer;
     }
 
     .chat-messages {
@@ -290,6 +335,11 @@
       align-self: flex-end;
       background: #f0f4ff;
       border-color: #dbeafe;
+    }
+
+    .message-bubble.private {
+      background: #fffbeb;
+      border-color: #fef3c7;
     }
 
     .msg-meta {
@@ -343,25 +393,41 @@
 </head>
 <body>
 
-  <!-- SPLASH SCREEN -->
+  <!-- SPLASH SCREEN WITH SEQUENTIAL TAGLINE LINES -->
   <div id="splash-screen">
-    <h1>Open, Confident, Together</h1>
-    <p>EGC: EMPLOYEE GROUP CHAT</p>
+    <div id="splash-text">Loading...</div>
+    <div id="splash-sub">EGC: Secure, Safe, Private</div>
   </div>
 
-  <!-- ONBOARDING MODAL -->
+  <!-- ONBOARDING & LOGIN MODAL -->
   <div id="onboarding-modal" class="modal-overlay">
     <div class="modal-card">
       <h2>Welcome to EGC</h2>
-      <p>What will you be called here?</p>
-      <input type="text" id="username-input" placeholder="Enter your display name..." maxlength="20" />
+      <p>Secure, Safe, Private • Anonymous Chat</p>
       
-      <div class="gender-options">
-        <button type="button" class="gender-btn male" onclick="selectGender('male')">Male</button>
-        <button type="button" class="gender-btn female" onclick="selectGender('female')">Female</button>
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-register" onclick="switchAuthMode('register')">New User</button>
+        <button class="auth-tab" id="tab-login" onclick="switchAuthMode('login')">Existing User</button>
       </div>
 
-      <button id="join-btn" onclick="registerUser()">Enter Group Chat</button>
+      <!-- REGISTER FORM -->
+      <div id="register-form">
+        <input type="text" id="reg-username" placeholder="Choose a display name..." maxlength="20" autocomplete="off" />
+        <input type="password" id="reg-password" placeholder="Create a password..." autocomplete="new-password" />
+        
+        <div class="gender-options">
+          <button type="button" class="gender-btn male" onclick="selectGender('male')">Male</button>
+          <button type="button" class="gender-btn female" onclick="selectGender('female')">Female</button>
+        </div>
+        <button class="action-btn" id="join-btn" onclick="registerUser()">Register & Enter</button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div id="login-form" style="display: none;">
+        <input type="text" id="login-username" placeholder="Enter your username..." maxlength="20" autocomplete="off" />
+        <input type="password" id="login-password" placeholder="Enter your password..." autocomplete="current-password" />
+        <button class="action-btn" id="login-btn" onclick="loginUser()">Login & Enter</button>
+      </div>
     </div>
   </div>
 
@@ -369,7 +435,7 @@
   <div id="users-modal" class="modal-overlay">
     <div class="modal-card">
       <h2>EGC Members</h2>
-      <p>All synced participants</p>
+      <p>Tap any username to start a private 1-on-1 chat</p>
       <div class="users-list" id="users-list-container">Loading users...</div>
       <button class="close-modal-btn" onclick="closeModal('users-modal')">Close</button>
     </div>
@@ -379,11 +445,12 @@
   <div id="help-modal" class="modal-overlay">
     <div class="modal-card">
       <h2>Help & Support</h2>
-      <p>Welcome to <strong>EGC (Employee Group Chat)</strong>. Here is how it works:</p>
+      <p><strong>Secure, Safe, Private</strong>:</p>
       <ul>
+        <li>Your identity is completely safe here.</li>
+        <li>No mobile number or email required.</li>
         <li>Chats sync automatically for the last 2 days (48 hours).</li>
-        <li>Your display name is saved permanently on your browser.</li>
-        <li>Duplicate names automatically append a number (e.g., user1).</li>
+        <li>Tap any username in the "Users" list to start a private 1-on-1 chat.</li>
       </ul>
       <button class="close-modal-btn" onclick="closeModal('help-modal')">Close</button>
     </div>
@@ -393,7 +460,7 @@
   <div id="dev-modal" class="modal-overlay">
     <div class="modal-card">
       <h2>Developer Contact</h2>
-      <p>Need technical support, feature additions, or bug reporting? Reach out directly to the developer:</p>
+      <p>Need support or bug reporting? Reach out to the developer:</p>
       <p style="text-align: center; margin: 15px 0;">
         <a href="mailto:gy6790470@gmail.com" style="color: #2563eb; font-weight: bold; font-size: 1rem; text-decoration: none;">gy6790470@gmail.com</a>
       </p>
@@ -405,8 +472,8 @@
   <div class="chat-container">
     <div class="chat-header">
       <div class="title-area">
-        <h3>EGC Chat</h3>
-        <span>Open, Confident, Together</span>
+        <h3 id="chat-room-title">EGC Chat (Public)</h3>
+        <span id="chat-room-subtitle">Secure, Safe, Private</span>
       </div>
       <div class="header-actions">
         <button class="header-btn" onclick="openUsersModal()">👥 Users</button>
@@ -424,7 +491,7 @@
 
     <form class="chat-input-area" onsubmit="sendMessage(event)">
       <input type="text" id="message-input" placeholder="Type a message..." required autocomplete="off" />
-      <button type="submit">Send</button>
+      <button type="submit" id="send-btn">Send</button>
     </form>
   </div>
 
@@ -435,16 +502,43 @@
     let selectedGender = "";
     let renderedCount = 0;
     let cachedUsers = [];
+    let currentRecipient = null; // null = public chat, string = private chat with username
 
+    // Sequential Splash Screen Animation
     window.addEventListener("DOMContentLoaded", () => {
-      setTimeout(() => {
-        const splash = document.getElementById("splash-screen");
-        splash.style.opacity = "0";
-        setTimeout(() => {
-          splash.style.display = "none";
-          initApp();
-        }, 600);
-      }, 2200);
+      const splashTexts = [
+        "Your identity is safe here",
+        "No mobile number required",
+        "No email required",
+        "Chat freely, chat safely",
+        "You are unknown here, let's chat anonymously"
+      ];
+      
+      const textElem = document.getElementById("splash-text");
+      let index = 0;
+
+      function showNextText() {
+        if (index < splashTexts.length) {
+          textElem.classList.remove("show");
+          setTimeout(() => {
+            textElem.innerText = splashTexts[index];
+            textElem.classList.add("show");
+            index++;
+            setTimeout(showNextText, 900); // stay duration per line
+          }, 300);
+        } else {
+          setTimeout(() => {
+            const splash = document.getElementById("splash-screen");
+            splash.style.opacity = "0";
+            setTimeout(() => {
+              splash.style.display = "none";
+              initApp();
+            }, 600);
+          }, 800);
+        }
+      }
+
+      showNextText();
     });
 
     function initApp() {
@@ -458,6 +552,20 @@
       }
     }
 
+    function switchAuthMode(mode) {
+      if (mode === 'register') {
+        document.getElementById('register-form').style.display = 'block';
+        document.getElementById('login-form').style.display = 'none';
+        document.getElementById('tab-register').classList.add('active');
+        document.getElementById('tab-login').classList.remove('active');
+      } else {
+        document.getElementById('register-form').style.display = 'none';
+        document.getElementById('login-form').style.display = 'block';
+        document.getElementById('tab-login').classList.add('active');
+        document.getElementById('tab-register').classList.remove('active');
+      }
+    }
+
     function selectGender(gender) {
       selectedGender = gender;
       document.querySelectorAll(".gender-btn").forEach(btn => btn.classList.remove("selected"));
@@ -465,20 +573,16 @@
     }
 
     async function registerUser() {
-      const nameInput = document.getElementById("username-input").value.trim();
+      const nameInput = document.getElementById("reg-username").value.trim();
+      const passInput = document.getElementById("reg-password").value.trim();
       const joinBtn = document.getElementById("join-btn");
 
-      if (!nameInput) {
-        alert("Please enter a name.");
-        return;
-      }
-      if (!selectedGender) {
-        alert("Please select Male or Female.");
-        return;
-      }
+      if (!nameInput) { alert("Please enter a username."); return; }
+      if (!passInput) { alert("Please enter a password."); return; }
+      if (!selectedGender) { alert("Please select Male or Female."); return; }
 
       joinBtn.disabled = true;
-      joinBtn.innerText = "Checking availability...";
+      joinBtn.innerText = "Registering...";
 
       try {
         const response = await fetch(SCRIPT_URL, {
@@ -487,17 +591,14 @@
           body: JSON.stringify({
             action: "registerUser",
             name: nameInput,
-            gender: selectedGender
+            gender: selectedGender,
+            password: passInput
           })
         });
-        const rawText = await response.text();
-        const result = JSON.parse(rawText);
+        const result = JSON.parse(await response.text());
 
         if (result.status === "success") {
-          currentUser = {
-            name: result.assignedName,
-            gender: result.gender
-          };
+          currentUser = { name: result.assignedName, gender: result.gender };
           localStorage.setItem("egc_user", JSON.stringify(currentUser));
           
           document.getElementById("onboarding-modal").style.display = "none";
@@ -506,14 +607,55 @@
           preloadUsers();
           setInterval(() => syncLastTwoDaysChats(false), 5000);
         } else {
-          alert("Server error: " + (result.message || "Unknown error"));
+          alert("Registration failed.");
         }
       } catch (err) {
-        console.error("Registration failed:", err);
-        alert("Connection error. Verify Apps Script deployment.");
+        alert("Connection error.");
       } finally {
         joinBtn.disabled = false;
-        joinBtn.innerText = "Enter Group Chat";
+        joinBtn.innerText = "Register & Enter";
+      }
+    }
+
+    async function loginUser() {
+      const nameInput = document.getElementById("login-username").value.trim();
+      const passInput = document.getElementById("login-password").value.trim();
+      const loginBtn = document.getElementById("login-btn");
+
+      if (!nameInput || !passInput) { alert("Please fill in both fields."); return; }
+
+      loginBtn.disabled = true;
+      loginBtn.innerText = "Logging in...";
+
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "loginUser",
+            name: nameInput,
+            password: passInput
+          })
+        });
+        const result = JSON.parse(await response.text());
+
+        if (result.status === "success") {
+          currentUser = { name: result.name, gender: result.gender };
+          localStorage.setItem("egc_user", JSON.stringify(currentUser));
+          
+          document.getElementById("onboarding-modal").style.display = "none";
+          updateUserBadge();
+          syncLastTwoDaysChats(true);
+          preloadUsers();
+          setInterval(() => syncLastTwoDaysChats(false), 5000);
+        } else {
+          alert(result.message || "Invalid credentials.");
+        }
+      } catch (err) {
+        alert("Connection error.");
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.innerText = "Login & Enter";
       }
     }
 
@@ -527,12 +669,8 @@
       try {
         const response = await fetch(`${SCRIPT_URL}?action=getUsers`);
         const result = JSON.parse(await response.text());
-        if (result.status === "success") {
-          cachedUsers = result.users || [];
-        }
-      } catch (err) {
-        console.error("Failed to preload users", err);
-      }
+        if (result.status === "success") { cachedUsers = result.users || []; }
+      } catch (err) { console.error(err); }
     }
 
     async function openUsersModal() {
@@ -540,11 +678,8 @@
       const container = document.getElementById("users-list-container");
       modal.style.display = "flex";
 
-      if (cachedUsers.length > 0) {
-        renderUsersList(cachedUsers);
-      } else {
-        container.innerHTML = "Loading users...";
-      }
+      if (cachedUsers.length > 0) { renderUsersList(cachedUsers); }
+      else { container.innerHTML = "Loading users..."; }
 
       try {
         const response = await fetch(`${SCRIPT_URL}?action=getUsers`);
@@ -553,36 +688,40 @@
           cachedUsers = result.users || [];
           renderUsersList(cachedUsers);
         }
-      } catch (err) {
-        container.innerHTML = "Unable to fetch users.";
-      }
+      } catch (err) { container.innerHTML = "Unable to fetch users."; }
     }
 
     function renderUsersList(users) {
       const container = document.getElementById("users-list-container");
-      if (users.length === 0) {
-        container.innerHTML = "<p style='text-align:center; color:#888;'>No users registered yet.</p>";
+      const filtered = users.filter(u => u.name !== currentUser.name);
+
+      if (filtered.length === 0) {
+        container.innerHTML = "<p style='text-align:center; color:#888;'>No other members yet.</p>";
         return;
       }
 
-      container.innerHTML = users.map(u => {
+      container.innerHTML = filtered.map(u => {
         const colorClass = u.gender === "male" ? "male-name" : "female-name";
         return `
           <div class="user-item">
-            <span class="${colorClass}">${escapeHTML(u.name)}</span>
-            <span style="font-size:0.75rem; color:#888;">${u.gender}</span>
+            <span class="${colorClass}" onclick="startPrivateChat('${escapeHTML(u.name)}')">${escapeHTML(u.name)}</span>
+            <button class="private-chat-trigger" onclick="startPrivateChat('${escapeHTML(u.name)}')">Private Chat</button>
           </div>
         `;
       }).join('');
     }
 
-    function openModal(modalId) {
-      document.getElementById(modalId).style.display = "flex";
+    function startPrivateChat(username) {
+      currentRecipient = username;
+      closeModal('users-modal');
+      document.getElementById("chat-room-title").innerText = `Private Chat: @${username}`;
+      document.getElementById("chat-room-subtitle").innerText = "End-to-end anonymous 1-on-1";
+      document.getElementById("message-input").placeholder = `Message ${username} privately...`;
+      syncLastTwoDaysChats(true);
     }
 
-    function closeModal(modalId) {
-      document.getElementById(modalId).style.display = "none";
-    }
+    function openModal(modalId) { document.getElementById(modalId).style.display = "flex"; }
+    function closeModal(modalId) { document.getElementById(modalId).style.display = "none"; }
 
     async function syncLastTwoDaysChats(isInitialLoad) {
       const chatBox = document.getElementById("chat-messages");
@@ -591,26 +730,44 @@
         const result = JSON.parse(await response.text());
 
         if (result.status === "success") {
-          const messages = result.messages || [];
+          const allMessages = result.messages || [];
+
+          // Filter messages relevant to current view (Public vs Private)
+          const messages = allMessages.filter(msg => {
+            if (!currentRecipient) {
+              return !msg.recipient || msg.recipient === ""; // Public messages
+            } else {
+              // Private messages between currentUser and currentRecipient
+              return (msg.sender === currentUser.name && msg.recipient === currentRecipient) ||
+                     (msg.sender === currentRecipient && msg.recipient === currentUser.name);
+            }
+          });
 
           if (isInitialLoad || messages.length !== renderedCount) {
-            chatBox.innerHTML = `<div class="sync-banner">Showing chats from the last 2 days</div>`;
+            const bannerText = currentRecipient ? `Private Chat with ${currentRecipient}` : `Showing chats from the last 2 days (Public)`;
+            chatBox.innerHTML = `<div class="sync-banner">${bannerText} <span style="cursor:pointer; color:#2563eb; margin-left:10px;" onclick="switchToPublic()">[Switch to Public Chat]</span></div>`;
             
             if (messages.length === 0) {
-              chatBox.innerHTML += `<div class="sync-banner">No messages in the last 2 days. Start chatting!</div>`;
+              chatBox.innerHTML += `<div class="sync-banner">No messages here yet. Say hello!</div>`;
             } else {
               messages.forEach(msg => {
-                appendMessageToUI(msg.name, msg.gender, msg.message, formatChatTime(msg.timestamp));
+                appendMessageToUI(msg.sender, msg.gender, msg.message, formatChatTime(msg.timestamp), !!msg.recipient);
               });
             }
             renderedCount = messages.length;
           }
         }
       } catch (err) {
-        if (isInitialLoad) {
-          chatBox.innerHTML = `<div class="sync-banner">Unable to load history.</div>`;
-        }
+        if (isInitialLoad) { chatBox.innerHTML = `<div class="sync-banner">Unable to load history.</div>`; }
       }
+    }
+
+    function switchToPublic() {
+      currentRecipient = null;
+      document.getElementById("chat-room-title").innerText = `EGC Chat (Public)`;
+      document.getElementById("chat-room-subtitle").innerText = "Secure, Safe, Private";
+      document.getElementById("message-input").placeholder = "Type a public message...";
+      syncLastTwoDaysChats(true);
     }
 
     async function sendMessage(e) {
@@ -623,7 +780,7 @@
 
       const nowISO = new Date().toISOString();
       
-      appendMessageToUI(currentUser.name, currentUser.gender, text, formatChatTime(nowISO));
+      appendMessageToUI(currentUser.name, currentUser.gender, text, formatChatTime(nowISO), !!currentRecipient);
       renderedCount++;
       input.value = "";
       input.blur();
@@ -634,14 +791,13 @@
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({
             action: "sendMessage",
-            name: currentUser.name,
+            sender: currentUser.name,
+            recipient: currentRecipient || "",
             gender: currentUser.gender,
             message: text
           })
         });
-      } catch (err) {
-        console.error("Failed to sync message:", err);
-      }
+      } catch (err) { console.error(err); }
     }
 
     function formatChatTime(isoString) {
@@ -656,16 +812,16 @@
       return `${date.toLocaleDateString([], { day: 'numeric', month: 'short' })}, ${timeStr}`;
     }
 
-    function appendMessageToUI(name, gender, text, formattedTime) {
+    function appendMessageToUI(name, gender, text, formattedTime, isPrivate) {
       const chatBox = document.getElementById("chat-messages");
       const isOwn = currentUser && name === currentUser.name;
       const colorClass = gender === "male" ? "male-name" : "female-name";
 
       const bubble = document.createElement("div");
-      bubble.className = `message-bubble ${isOwn ? "own" : ""}`;
+      bubble.className = `message-bubble ${isOwn ? "own" : ""} ${isPrivate ? "private" : ""}`;
       bubble.innerHTML = `
         <div class="msg-meta">
-          <span class="${colorClass}">${escapeHTML(name)}</span>
+          <span class="${colorClass}" onclick="startPrivateChat('${escapeHTML(name)}')">${escapeHTML(name)} ${isPrivate ? '(Private)' : ''}</span>
           <span class="msg-time">${escapeHTML(formattedTime)}</span>
         </div>
         <div class="msg-text">${escapeHTML(text)}</div>
