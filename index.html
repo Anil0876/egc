@@ -22,7 +22,7 @@
       overflow: hidden;
     }
 
-    /* 1. SPLASH SCREEN WITH SEQUENTIAL TEXT ANIMATION */
+    /* 1. SPLASH SCREEN */
     #splash-screen {
       position: fixed;
       inset: 0;
@@ -266,7 +266,7 @@
 
     .header-actions {
       display: flex;
-      gap: 6px;
+      gap: 5px;
       align-items: center;
     }
 
@@ -274,11 +274,15 @@
       background: #333;
       color: #fff;
       border: none;
-      padding: 6px 10px;
+      padding: 6px 8px;
       border-radius: 14px;
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       cursor: pointer;
       font-weight: 600;
+    }
+
+    .header-btn.logout {
+      background: #b91c1c; /* Red color for logout */
     }
 
     .user-badge {
@@ -393,7 +397,7 @@
 </head>
 <body>
 
-  <!-- SPLASH SCREEN WITH SEQUENTIAL TAGLINE LINES -->
+  <!-- SPLASH SCREEN -->
   <div id="splash-screen">
     <div id="splash-text">Loading...</div>
     <div id="splash-sub">EGC: Secure, Safe, Private</div>
@@ -451,6 +455,7 @@
         <li>No mobile number or email required.</li>
         <li>Chats sync automatically for the last 2 days (48 hours).</li>
         <li>Tap any username in the "Users" list to start a private 1-on-1 chat.</li>
+        <li>Use the <strong>Logout</strong> button to switch user accounts or change browsers safely.</li>
       </ul>
       <button class="close-modal-btn" onclick="closeModal('help-modal')">Close</button>
     </div>
@@ -479,6 +484,7 @@
         <button class="header-btn" onclick="openUsersModal()">👥 Users</button>
         <button class="header-btn" onclick="openModal('help-modal')">❓ Help</button>
         <button class="header-btn" onclick="openModal('dev-modal')">💻 Dev</button>
+        <button class="header-btn logout" onclick="logoutUser()">🚪 Logout</button>
         <div class="user-badge">
           <span id="current-user-display">Guest</span>
         </div>
@@ -502,9 +508,9 @@
     let selectedGender = "";
     let renderedCount = 0;
     let cachedUsers = [];
-    let currentRecipient = null; // null = public chat, string = private chat with username
+    let currentRecipient = null;
+    let pollInterval = null;
 
-    // Sequential Splash Screen Animation
     window.addEventListener("DOMContentLoaded", () => {
       const splashTexts = [
         "Your identity is safe here",
@@ -524,7 +530,7 @@
             textElem.innerText = splashTexts[index];
             textElem.classList.add("show");
             index++;
-            setTimeout(showNextText, 900); // stay duration per line
+            setTimeout(showNextText, 900);
           }, 300);
         } else {
           setTimeout(() => {
@@ -548,7 +554,19 @@
         updateUserBadge();
         syncLastTwoDaysChats(true);
         preloadUsers();
-        setInterval(() => syncLastTwoDaysChats(false), 5000);
+        if (pollInterval) clearInterval(pollInterval);
+        pollInterval = setInterval(() => syncLastTwoDaysChats(false), 5000);
+      }
+    }
+
+    function logoutUser() {
+      if (confirm("Are you sure you want to logout? You can log back in anytime with your password.")) {
+        localStorage.removeItem("egc_user");
+        currentUser = null;
+        if (pollInterval) clearInterval(pollInterval);
+        document.getElementById("onboarding-modal").style.display = "flex";
+        document.getElementById("login-username").value = "";
+        document.getElementById("login-password").value = "";
       }
     }
 
@@ -602,10 +620,7 @@
           localStorage.setItem("egc_user", JSON.stringify(currentUser));
           
           document.getElementById("onboarding-modal").style.display = "none";
-          updateUserBadge();
-          syncLastTwoDaysChats(true);
-          preloadUsers();
-          setInterval(() => syncLastTwoDaysChats(false), 5000);
+          initApp();
         } else {
           alert("Registration failed.");
         }
@@ -644,10 +659,7 @@
           localStorage.setItem("egc_user", JSON.stringify(currentUser));
           
           document.getElementById("onboarding-modal").style.display = "none";
-          updateUserBadge();
-          syncLastTwoDaysChats(true);
-          preloadUsers();
-          setInterval(() => syncLastTwoDaysChats(false), 5000);
+          initApp();
         } else {
           alert(result.message || "Invalid credentials.");
         }
@@ -732,12 +744,10 @@
         if (result.status === "success") {
           const allMessages = result.messages || [];
 
-          // Filter messages relevant to current view (Public vs Private)
           const messages = allMessages.filter(msg => {
             if (!currentRecipient) {
-              return !msg.recipient || msg.recipient === ""; // Public messages
+              return !msg.recipient || msg.recipient === "";
             } else {
-              // Private messages between currentUser and currentRecipient
               return (msg.sender === currentUser.name && msg.recipient === currentRecipient) ||
                      (msg.sender === currentRecipient && msg.recipient === currentUser.name);
             }
