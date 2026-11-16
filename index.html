@@ -183,9 +183,19 @@
       cursor: pointer;
     }
 
-    .users-list {
+    .user-search-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+      outline: none;
+    }
+
+    .users-list, .inbox-list {
       overflow-y: auto;
-      max-height: 220px;
+      max-height: 200px;
       margin-bottom: 16px;
       text-align: left;
       border: 1px solid #eee;
@@ -194,13 +204,28 @@
       background: #fafafa;
     }
 
-    .user-item {
+    .user-item, .inbox-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 10px;
+      padding: 10px;
       border-bottom: 1px solid #eaeaea;
       font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .user-item:hover, .inbox-item:hover {
+      background: #f1f3f5;
+    }
+
+    .inbox-preview {
+      font-size: 0.75rem;
+      color: #777;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 180px;
     }
 
     .private-chat-trigger {
@@ -255,7 +280,7 @@
     }
 
     .chat-header .title-area h3 {
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       letter-spacing: 0.5px;
     }
 
@@ -266,7 +291,7 @@
 
     .header-actions {
       display: flex;
-      gap: 5px;
+      gap: 4px;
       align-items: center;
     }
 
@@ -274,22 +299,22 @@
       background: #333;
       color: #fff;
       border: none;
-      padding: 6px 8px;
-      border-radius: 14px;
-      font-size: 0.68rem;
+      padding: 5px 7px;
+      border-radius: 12px;
+      font-size: 0.65rem;
       cursor: pointer;
       font-weight: 600;
     }
 
     .header-btn.logout {
-      background: #b91c1c; /* Red color for logout */
+      background: #b91c1c;
     }
 
     .user-badge {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       background: #222;
-      padding: 5px 8px;
-      border-radius: 16px;
+      padding: 4px 6px;
+      border-radius: 12px;
     }
 
     .male-name {
@@ -314,15 +339,23 @@
       background: #fafafa;
     }
 
-    .sync-banner {
-      text-align: center;
-      font-size: 0.75rem;
-      color: #888;
-      background: #eeeeee;
-      padding: 6px 12px;
-      border-radius: 12px;
+    .load-more-btn {
       align-self: center;
-      margin-bottom: 6px;
+      background: #e2e8f0;
+      color: #1e293b;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      transition: 0.2s;
+    }
+
+    .load-more-btn:hover {
+      background: #cbd5e1;
     }
 
     .message-bubble {
@@ -439,9 +472,20 @@
   <div id="users-modal" class="modal-overlay">
     <div class="modal-card">
       <h2>EGC Members</h2>
-      <p>Tap any username to start a private 1-on-1 chat</p>
+      <p>Search users or tap to chat privately</p>
+      <input type="text" id="user-search-input" class="user-search-input" placeholder="Search usernames..." oninput="filterUsersList()" autocomplete="off" />
       <div class="users-list" id="users-list-container">Loading users...</div>
       <button class="close-modal-btn" onclick="closeModal('users-modal')">Close</button>
+    </div>
+  </div>
+
+  <!-- INBOX MODAL -->
+  <div id="inbox-modal" class="modal-overlay">
+    <div class="modal-card">
+      <h2>Private Inbox</h2>
+      <p>All your previous 1-on-1 conversations</p>
+      <div class="inbox-list" id="inbox-list-container">Loading inbox...</div>
+      <button class="close-modal-btn" onclick="closeModal('inbox-modal')">Close</button>
     </div>
   </div>
 
@@ -453,9 +497,8 @@
       <ul>
         <li>Your identity is completely safe here.</li>
         <li>No mobile number or email required.</li>
-        <li>Chats sync automatically for the last 2 days (48 hours).</li>
+        <li>Access all your past private conversations instantly via the <strong>Inbox</strong> button.</li>
         <li>Tap any username in the "Users" list to start a private 1-on-1 chat.</li>
-        <li>Use the <strong>Logout</strong> button to switch user accounts or change browsers safely.</li>
       </ul>
       <button class="close-modal-btn" onclick="closeModal('help-modal')">Close</button>
     </div>
@@ -465,7 +508,7 @@
   <div id="dev-modal" class="modal-overlay">
     <div class="modal-card">
       <h2>Developer Contact</h2>
-      <p>Reach out to the developer:Gourav Rao</p>
+      <p>Reach out to the developer: <strong>@egcdev</strong></p>
       <p style="text-align: center; margin: 15px 0;">
         <a href="mailto:gy6790470@gmail.com" style="color: #2563eb; font-weight: bold; font-size: 1rem; text-decoration: none;">gy6790470@gmail.com</a>
       </p>
@@ -481,10 +524,11 @@
         <span id="chat-room-subtitle">Secure, Safe, Private</span>
       </div>
       <div class="header-actions">
+        <button class="header-btn" onclick="openInboxModal()">📥 Inbox</button>
         <button class="header-btn" onclick="openUsersModal()">👥 Users</button>
         <button class="header-btn" onclick="openModal('help-modal')">❓ Help</button>
         <button class="header-btn" onclick="openModal('dev-modal')">💻 Dev</button>
-        <button class="header-btn logout" onclick="logoutUser()">🚪 Logout</button>
+        <button class="header-btn logout" onclick="logoutUser()">🚪</button>
         <div class="user-badge">
           <span id="current-user-display">Guest</span>
         </div>
@@ -492,7 +536,7 @@
     </div>
 
     <div class="chat-messages" id="chat-messages">
-      <div class="sync-banner">Syncing chats from the last 2 days...</div>
+      <div class="sync-banner">Loading chats...</div>
     </div>
 
     <form class="chat-input-area" onsubmit="sendMessage(event)">
@@ -508,8 +552,10 @@
     let selectedGender = "";
     let renderedCount = 0;
     let cachedUsers = [];
+    let allGlobalMessages = [];
     let currentRecipient = null;
     let pollInterval = null;
+    let daysWindow = 2;
 
     window.addEventListener("DOMContentLoaded", () => {
       const splashTexts = [
@@ -552,15 +598,16 @@
         document.getElementById("onboarding-modal").style.display = "flex";
       } else {
         updateUserBadge();
-        syncLastTwoDaysChats(true);
+        daysWindow = 2;
+        syncChats(true);
         preloadUsers();
         if (pollInterval) clearInterval(pollInterval);
-        pollInterval = setInterval(() => syncLastTwoDaysChats(false), 5000);
+        pollInterval = setInterval(() => syncChats(false), 5000);
       }
     }
 
     function logoutUser() {
-      if (confirm("Are you sure you want to logout? You can log back in anytime with your password.")) {
+      if (confirm("Are you sure you want to logout?")) {
         localStorage.removeItem("egc_user");
         currentUser = null;
         if (pollInterval) clearInterval(pollInterval);
@@ -687,11 +734,15 @@
 
     async function openUsersModal() {
       const modal = document.getElementById("users-modal");
-      const container = document.getElementById("users-list-container");
+      const searchInput = document.getElementById("user-search-input");
+      searchInput.value = "";
       modal.style.display = "flex";
 
-      if (cachedUsers.length > 0) { renderUsersList(cachedUsers); }
-      else { container.innerHTML = "Loading users..."; }
+      if (cachedUsers.length > 0) {
+        renderUsersList(cachedUsers);
+      } else {
+        document.getElementById("users-list-container").innerHTML = "Loading users...";
+      }
 
       try {
         const response = await fetch(`${SCRIPT_URL}?action=getUsers`);
@@ -700,19 +751,86 @@
           cachedUsers = result.users || [];
           renderUsersList(cachedUsers);
         }
-      } catch (err) { container.innerHTML = "Unable to fetch users."; }
+      } catch (err) {
+        document.getElementById("users-list-container").innerHTML = "Unable to fetch users.";
+      }
     }
 
-    function renderUsersList(users) {
-      const container = document.getElementById("users-list-container");
-      const filtered = users.filter(u => u.name !== currentUser.name);
+    async function openInboxModal() {
+      const modal = document.getElementById("inbox-modal");
+      const container = document.getElementById("inbox-list-container");
+      modal.style.display = "flex";
+      container.innerHTML = "Loading inbox...";
 
-      if (filtered.length === 0) {
-        container.innerHTML = "<p style='text-align:center; color:#888;'>No other members yet.</p>";
+      try {
+        const response = await fetch(`${SCRIPT_URL}?action=getMessages`);
+        const result = JSON.parse(await response.text());
+        if (result.status === "success") {
+          allGlobalMessages = result.messages || [];
+          renderInboxList();
+        }
+      } catch (err) {
+        container.innerHTML = "Unable to load inbox.";
+      }
+    }
+
+    function renderInboxList() {
+      const container = document.getElementById("inbox-list-container");
+      
+      // Extract unique partners from private messages involving currentUser
+      const privateMap = new Map();
+      allGlobalMessages.forEach(msg => {
+        if (msg.recipient && (msg.sender === currentUser.name || msg.recipient === currentUser.name)) {
+          const partner = msg.sender === currentUser.name ? msg.recipient : msg.sender;
+          privateMap.set(partner, msg.message); // keeps latest message as we iterate
+        }
+      });
+
+      if (privateMap.size === 0) {
+        container.innerHTML = "<p style='text-align:center; color:#888; padding: 10px;'>No private chats yet.</p>";
         return;
       }
 
-      container.innerHTML = filtered.map(u => {
+      let html = "";
+      privateMap.forEach((lastMsg, partner) => {
+        // Find partner gender if available in cachedUsers
+        const userObj = cachedUsers.find(u => u.name === partner);
+        const genderClass = userObj && userObj.gender === "male" ? "male-name" : "female-name";
+
+        html += `
+          <div class="inbox-item" onclick="startPrivateChat('${escapeHTML(partner)}')">
+            <div>
+              <span class="${genderClass}">${escapeHTML(partner)}</span>
+              <div class="inbox-preview">${escapeHTML(lastMsg)}</div>
+            </div>
+            <button class="private-chat-trigger">Open</button>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function filterUsersList() {
+      const query = document.getElementById("user-search-input").value.toLowerCase().trim();
+      const filtered = cachedUsers.filter(u => u.name !== currentUser.name && u.name.toLowerCase().includes(query));
+      renderUsersListDirect(filtered);
+    }
+
+    function renderUsersList(users) {
+      const filtered = users.filter(u => u.name !== currentUser.name);
+      renderUsersListDirect(filtered);
+    }
+
+    function renderUsersListDirect(users) {
+      const container = document.getElementById("users-list-container");
+
+      if (users.length === 0) {
+        container.innerHTML = "<p style='text-align:center; color:#888; padding: 10px;'>No matching users found.</p>";
+        return;
+      }
+
+      container.innerHTML = users.map(u => {
         const colorClass = u.gender === "male" ? "male-name" : "female-name";
         return `
           <div class="user-item">
@@ -725,26 +843,42 @@
 
     function startPrivateChat(username) {
       currentRecipient = username;
+      daysWindow = 2;
       closeModal('users-modal');
-      document.getElementById("chat-room-title").innerText = `Private Chat: @${username}`;
+      closeModal('inbox-modal');
+      document.getElementById("chat-room-title").innerText = `Private: @${username}`;
       document.getElementById("chat-room-subtitle").innerText = "End-to-end anonymous 1-on-1";
       document.getElementById("message-input").placeholder = `Message ${username} privately...`;
-      syncLastTwoDaysChats(true);
+      syncChats(true);
+    }
+
+    function switchToPublic() {
+      currentRecipient = null;
+      daysWindow = 2;
+      document.getElementById("chat-room-title").innerText = `EGC Chat (Public)`;
+      document.getElementById("chat-room-subtitle").innerText = "Secure, Safe, Private";
+      document.getElementById("message-input").placeholder = "Type a public message...";
+      syncChats(true);
+    }
+
+    function loadOlderChats() {
+      daysWindow += 2;
+      syncChats(true);
     }
 
     function openModal(modalId) { document.getElementById(modalId).style.display = "flex"; }
     function closeModal(modalId) { document.getElementById(modalId).style.display = "none"; }
 
-    async function syncLastTwoDaysChats(isInitialLoad) {
+    async function syncChats(isInitialLoad) {
       const chatBox = document.getElementById("chat-messages");
       try {
         const response = await fetch(`${SCRIPT_URL}?action=getMessages`);
         const result = JSON.parse(await response.text());
 
         if (result.status === "success") {
-          const allMessages = result.messages || [];
+          allGlobalMessages = result.messages || [];
 
-          const messages = allMessages.filter(msg => {
+          const relevantMessages = allGlobalMessages.filter(msg => {
             if (!currentRecipient) {
               return !msg.recipient || msg.recipient === "";
             } else {
@@ -753,31 +887,48 @@
             }
           });
 
-          if (isInitialLoad || messages.length !== renderedCount) {
-            const bannerText = currentRecipient ? `Private Chat with ${currentRecipient}` : `Showing chats from the last 2 days (Public)`;
-            chatBox.innerHTML = `<div class="sync-banner">${bannerText} <span style="cursor:pointer; color:#2563eb; margin-left:10px;" onclick="switchToPublic()">[Switch to Public Chat]</span></div>`;
-            
-            if (messages.length === 0) {
-              chatBox.innerHTML += `<div class="sync-banner">No messages here yet. Say hello!</div>`;
+          const cutoffTime = Date.now() - (daysWindow * 24 * 60 * 60 * 1000);
+          const windowedMessages = relevantMessages.filter(msg => new Date(msg.timestamp).getTime() >= cutoffTime);
+          const hasOlderMessages = relevantMessages.some(msg => new Date(msg.timestamp).getTime() < cutoffTime);
+
+          if (isInitialLoad || windowedMessages.length !== renderedCount) {
+            chatBox.innerHTML = "";
+
+            if (hasOlderMessages) {
+              const loadBtn = document.createElement("button");
+              loadBtn.className = "load-more-btn";
+              loadBtn.innerText = "📜 Load Older Chats (Previous 2 Days)";
+              loadBtn.onclick = loadOlderChats;
+              chatBox.appendChild(loadBtn);
+            }
+
+            if (windowedMessages.length === 0) {
+              const emptyBanner = document.createElement("div");
+              emptyBanner.className = "sync-banner";
+              emptyBanner.innerText = "No messages in this time range. Start chatting!";
+              chatBox.appendChild(emptyBanner);
             } else {
-              messages.forEach(msg => {
+              windowedMessages.forEach(msg => {
                 appendMessageToUI(msg.sender, msg.gender, msg.message, formatChatTime(msg.timestamp), !!msg.recipient);
               });
             }
-            renderedCount = messages.length;
+
+            if (currentRecipient) {
+              const switchBanner = document.createElement("div");
+              switchBanner.className = "sync-banner";
+              switchBanner.innerHTML = `Private chat with ${currentRecipient} <span style="cursor:pointer; color:#2563eb; margin-left:10px;" onclick="switchToPublic()">[Switch to Public Chat]</span>`;
+              chatBox.prepend(switchBanner);
+            }
+
+            renderedCount = windowedMessages.length;
+            if (isInitialLoad) {
+              chatBox.scrollTop = chatBox.scrollHeight;
+            }
           }
         }
       } catch (err) {
         if (isInitialLoad) { chatBox.innerHTML = `<div class="sync-banner">Unable to load history.</div>`; }
       }
-    }
-
-    function switchToPublic() {
-      currentRecipient = null;
-      document.getElementById("chat-room-title").innerText = `EGC Chat (Public)`;
-      document.getElementById("chat-room-subtitle").innerText = "Secure, Safe, Private";
-      document.getElementById("message-input").placeholder = "Type a public message...";
-      syncLastTwoDaysChats(true);
     }
 
     async function sendMessage(e) {
