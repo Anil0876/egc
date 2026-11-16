@@ -398,16 +398,40 @@
       word-wrap: break-word;
     }
 
+    .chat-media-preview {
+      max-width: 100%;
+      max-height: 220px;
+      border-radius: 8px;
+      margin-top: 6px;
+      display: block;
+      object-fit: contain;
+      background: #00000008;
+    }
+
     .chat-input-area {
       display: flex;
       padding: 12px 14px;
       background: #ffffff;
       border-top: 1px solid #eeeeee;
-      gap: 10px;
+      gap: 8px;
+      align-items: center;
       flex-shrink: 0;
     }
 
-    .chat-input-area input {
+    .file-upload-btn {
+      background: #f1f3f5;
+      color: #333;
+      border: 1px solid #ddd;
+      padding: 10px 12px;
+      border-radius: 50%;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .chat-input-area input[type="text"] {
       flex: 1;
       padding: 12px 14px;
       border: 1px solid #ddd;
@@ -417,11 +441,11 @@
       background: #fff;
     }
 
-    .chat-input-area button {
+    .chat-input-area button[type="submit"] {
       background: #111111;
       color: #ffffff;
       border: none;
-      padding: 0 20px;
+      padding: 10px 18px;
       border-radius: 24px;
       font-weight: 600;
       cursor: pointer;
@@ -430,7 +454,7 @@
 </head>
 <body>
 
-  <!-- SPLASH SCREEN (FAST 2-SECOND TIMELINE) -->
+  <!-- SPLASH SCREEN -->
   <div id="splash-screen">
     <div id="splash-text">Loading...</div>
     <div id="splash-sub">EGC: Secure, Safe, Private</div>
@@ -496,9 +520,8 @@
       <p><strong>Secure, Safe, Private</strong>:</p>
       <ul>
         <li>Your identity is completely safe here.</li>
-        <li>No mobile number or email required.</li>
-        <li>Access all your past private conversations instantly via the <strong>Inbox</strong> button.</li>
-        <li>Tap any username in the "Users" list to start a private 1-on-1 chat.</li>
+        <li>Send photos, stickers, and GIFs directly using the attachment (📎) button.</li>
+        <li>Access past private conversations via the <strong>Inbox</strong> button.</li>
       </ul>
       <button class="close-modal-btn" onclick="closeModal('help-modal')">Close</button>
     </div>
@@ -540,7 +563,10 @@
     </div>
 
     <form class="chat-input-area" onsubmit="sendMessage(event)">
-      <input type="text" id="message-input" placeholder="Type a message..." required autocomplete="off" />
+      <label for="media-input" class="file-upload-btn" title="Send Photo, Sticker or GIF">📎</label>
+      <input type="file" id="media-input" accept="image/png, image/jpeg, image/gif, image/webp" style="display: none;" onchange="handleMediaSelect(event)" />
+      
+      <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off" />
       <button type="submit" id="send-btn">Send</button>
     </form>
   </div>
@@ -556,8 +582,8 @@
     let currentRecipient = null;
     let pollInterval = null;
     let daysWindow = 2;
+    let pendingMediaBase64 = null;
 
-    // Fast 2-Second Sequential Splash Screen Animation
     window.addEventListener("DOMContentLoaded", () => {
       const splashTexts = [
         "Your identity is safe here",
@@ -569,7 +595,7 @@
       
       const textElem = document.getElementById("splash-text");
       let index = 0;
-      const intervalTime = 320; // Fast step interval to finish within 2 seconds total
+      const intervalTime = 320;
 
       function showNextText() {
         if (index < splashTexts.length) {
@@ -783,7 +809,8 @@
       allGlobalMessages.forEach(msg => {
         if (msg.recipient && (msg.sender === currentUser.name || msg.recipient === currentUser.name)) {
           const partner = msg.sender === currentUser.name ? msg.recipient : msg.sender;
-          privateMap.set(partner, msg.message);
+          let previewText = (msg.message && msg.message.startsWith("data:image/")) ? "[Photo/GIF/Sticker]" : msg.message;
+          privateMap.set(partner, previewText);
         }
       });
 
@@ -801,7 +828,7 @@
           <div class="inbox-item" onclick="startPrivateChat('${escapeHTML(partner)}')">
             <div>
               <span class="${genderClass}">${escapeHTML(partner)}</span>
-              <div class="inbox-preview">${escapeHTML(lastMsg)}</div>
+              <div class="inbox-preview">${escapeHTML(lastMsg || '')}</div>
             </div>
             <button class="private-chat-trigger">Open</button>
           </div>
@@ -868,6 +895,45 @@
 
     function openModal(modalId) { document.getElementById(modalId).style.display = "flex"; }
     function closeModal(modalId) { document.getElementById(modalId).style.display = "none"; }
+
+    function handleMediaSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(uploadEvent) {
+        const img = new Image();
+        img.src = uploadEvent.target.result;
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Max dimension scaling to fit Google Sheets cell limits safely
+          const maxDim = 400;
+          if (width > height && width > maxDim) {
+            height *= maxDim / width;
+            width = maxDim;
+          } else if (height > maxDim) {
+            width *= maxDim / height;
+            height = maxDim;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Preserve animated GIF format or compress image/sticker to webp/jpeg
+          let mimeType = file.type === "image/gif" ? "image/gif" : "image/jpeg";
+          pendingMediaBase64 = canvas.toDataURL(mimeType, 0.75);
+
+          document.getElementById("message-input").placeholder = `Attached: ${file.name} (Ready)`;
+          document.getElementById("message-input").style.borderColor = "#2563eb";
+        };
+      };
+      reader.readAsDataURL(file);
+    }
 
     async function syncChats(isInitialLoad) {
       const chatBox = document.getElementById("chat-messages");
@@ -937,13 +1003,24 @@
 
       const input = document.getElementById("message-input");
       const text = input.value.trim();
-      if (!text) return;
+      
+      let messageContent = text;
+      if (pendingMediaBase64) {
+        messageContent = pendingMediaBase64;
+      }
+
+      if (!messageContent) return;
 
       const nowISO = new Date().toISOString();
       
-      appendMessageToUI(currentUser.name, currentUser.gender, text, formatChatTime(nowISO), !!currentRecipient);
+      appendMessageToUI(currentUser.name, currentUser.gender, messageContent, formatChatTime(nowISO), !!currentRecipient);
       renderedCount++;
+      
       input.value = "";
+      input.placeholder = "Type a message...";
+      input.style.borderColor = "#ddd";
+      pendingMediaBase64 = null;
+      document.getElementById("media-input").value = "";
       input.blur();
 
       try {
@@ -955,7 +1032,7 @@
             sender: currentUser.name,
             recipient: currentRecipient || "",
             gender: currentUser.gender,
-            message: text
+            message: messageContent
           })
         });
       } catch (err) { console.error(err); }
@@ -973,19 +1050,27 @@
       return `${date.toLocaleDateString([], { day: 'numeric', month: 'short' })}, ${timeStr}`;
     }
 
-    function appendMessageToUI(name, gender, text, formattedTime, isPrivate) {
+    function appendMessageToUI(name, gender, content, formattedTime, isPrivate) {
       const chatBox = document.getElementById("chat-messages");
       const isOwn = currentUser && name === currentUser.name;
       const colorClass = gender === "male" ? "male-name" : "female-name";
 
       const bubble = document.createElement("div");
       bubble.className = `message-bubble ${isOwn ? "own" : ""} ${isPrivate ? "private" : ""}`;
+      
+      let bodyHTML = "";
+      if (content && content.startsWith("data:image/")) {
+        bodyHTML = `<img src="${content}" class="chat-media-preview" alt="Sticker/GIF/Photo" />`;
+      } else {
+        bodyHTML = `<div class="msg-text">${escapeHTML(content || '')}</div>`;
+      }
+
       bubble.innerHTML = `
         <div class="msg-meta">
           <span class="${colorClass}" onclick="startPrivateChat('${escapeHTML(name)}')">${escapeHTML(name)} ${isPrivate ? '(Private)' : ''}</span>
           <span class="msg-time">${escapeHTML(formattedTime)}</span>
         </div>
-        <div class="msg-text">${escapeHTML(text)}</div>
+        ${bodyHTML}
       `;
 
       chatBox.appendChild(bubble);
