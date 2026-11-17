@@ -22,7 +22,7 @@
       overflow: hidden;
     }
 
-    /* 1. SPLASH SCREEN */
+    /* 1. FAST SPLASH SCREEN */
     #splash-screen {
       position: fixed;
       inset: 0;
@@ -259,7 +259,7 @@
       display: flex;
       flex-direction: column;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-      position: relative; /* Container context for floating icon */
+      position: relative;
     }
 
     @media (min-width: 768px) {
@@ -330,7 +330,6 @@
       cursor: pointer;
     }
 
-    /* Chat Messages Body Wrapper */
     .chat-body-wrapper {
       flex: 1;
       position: relative;
@@ -349,7 +348,7 @@
       background: #fafafa;
     }
 
-    /* FLOATING SEARCH ICON BUTTON */
+    /* FLOATING SEARCH ICON */
     .floating-search-btn {
       position: absolute;
       bottom: 20px;
@@ -392,6 +391,17 @@
 
     .load-more-btn:hover {
       background: #cbd5e1;
+    }
+
+    .sync-banner {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #888;
+      background: #eeeeee;
+      padding: 6px 12px;
+      border-radius: 12px;
+      align-self: center;
+      margin-bottom: 6px;
     }
 
     .message-bubble {
@@ -490,7 +500,7 @@
 </head>
 <body>
 
-  <!-- SPLASH SCREEN -->
+  <!-- FAST SPLASH SCREEN -->
   <div id="splash-screen">
     <div id="splash-text">Loading...</div>
     <div id="splash-sub">EGC: Secure, Safe, Private</div>
@@ -556,9 +566,10 @@
       <p><strong>Secure, Safe, Private</strong>:</p>
       <ul>
         <li>Your identity is completely safe here.</li>
-        <li>Send photos, stickers, and GIFs directly using the attachment (📎) button.</li>
-        <li>Tap the floating search icon (🔍) on the chat screen to search for users instantly.</li>
-        <li>Access past private conversations via the <strong>Inbox</strong> button.</li>
+        <li>No mobile number or email required.</li>
+        <li>Send photos, stickers, and GIFs using the attachment (📎) button.</li>
+        <li>Tap the floating search icon (🔍) to search for users instantly.</li>
+        <li>Access past private chats via the <strong>Inbox</strong> button.</li>
       </ul>
       <button class="close-modal-btn" onclick="closeModal('help-modal')">Close</button>
     </div>
@@ -594,7 +605,6 @@
       </div>
     </div>
 
-    <!-- CHAT BODY WITH FLOATING SEARCH BUTTON -->
     <div class="chat-body-wrapper">
       <div class="chat-messages" id="chat-messages">
         <div class="sync-banner">Loading chats...</div>
@@ -616,7 +626,7 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywv8618EGRtukOFev-moF6hBXxy3oFliNVPS1g7-Hfm5m6tJBdb6LsfTgtly9zJ3lX/exec";
+    const SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
 
     let currentUser = JSON.parse(localStorage.getItem("egc_user")) || null;
     let selectedGender = "";
