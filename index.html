@@ -566,9 +566,8 @@
       <p><strong>Secure, Safe, Private</strong>:</p>
       <ul>
         <li>Your identity is completely safe here.</li>
-        <li>No mobile number or email required.</li>
+        <li>Mention anyone using <strong>@username</strong> in your messages. Clicking a mention opens a private chat with them!</li>
         <li>Send photos, stickers, and GIFs using the attachment (📎) button.</li>
-        <li>Tap the floating search icon (🔍) to search for users instantly.</li>
         <li>Access past private chats via the <strong>Inbox</strong> button.</li>
       </ul>
       <button class="close-modal-btn" onclick="closeModal('help-modal')">Close</button>
@@ -620,7 +619,7 @@
       <label for="media-input" class="file-upload-btn" title="Send Photo, Sticker or GIF">📎</label>
       <input type="file" id="media-input" accept="image/png, image/jpeg, image/gif, image/webp" style="display: none;" onchange="handleMediaSelect(event)" />
       
-      <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off" />
+      <input type="text" id="message-input" placeholder="Type a message or @mention someone..." autocomplete="off" />
       <button type="submit" id="send-btn">Send</button>
     </form>
   </div>
@@ -1114,7 +1113,15 @@
       if (content && content.startsWith("data:image/")) {
         bodyHTML = `<img src="${content}" class="chat-media-preview" alt="Sticker/GIF/Photo" />`;
       } else {
-        bodyHTML = `<div class="msg-text">${escapeHTML(content || '')}</div>`;
+        // Convert @mentions into clickable links
+        let formattedText = escapeHTML(content || '');
+        formattedText = formattedText.replace(/@([a-zA-Z0-9_]+)/g, (match, username) => {
+          const userObj = cachedUsers.find(u => u.name.toLowerCase() === username.toLowerCase());
+          const mentionColor = userObj && userObj.gender === "female" ? "#ec4899" : "#2563eb";
+          return `<span style="color: ${mentionColor}; font-weight: bold; cursor: pointer; text-decoration: underline;" onclick="startPrivateChat('${escapeHTML(username)}')">@${escapeHTML(username)}</span>`;
+        });
+
+        bodyHTML = `<div class="msg-text">${formattedText}</div>`;
       }
 
       bubble.innerHTML = `
